@@ -1,20 +1,12 @@
-FROM golang:1.10 AS builder
+FROM golang:1.11 AS builder
 
-ARG BUILD_NUMBER=0
-ARG COMMIT_SHA
-ARG SOURCE_COMMIT
-ENV BUILD_COMMIT=${COMMIT_SHA:-${SOURCE_COMMIT:-unknown}}
+WORKDIR $GOPATH/src/github.com/drone-swarm-update
 
-COPY . $GOPATH/src/megpoid.xyz/go/drone-stack/
-WORKDIR $GOPATH/src/megpoid.xyz/go/drone-stack/
+COPY . .
 
-RUN go get -u github.com/golang/dep/cmd/dep
-RUN dep ensure
-RUN CGO_ENABLED=0 go install -ldflags "-w -s -X main.build=${BUILD_NUMBER} -X main.commit=$(expr substr BUILD_COMMIT_SHORT 1 8)" -a -tags netgo ./...
+RUN go build -o /bin/swarm-update cmd/swarm-update/main.go
 
 FROM docker:18.03.0-ce-dind
-LABEL maintainer="codestation <codestation404@gmail.com>"
+COPY --from=builder /bin/swarm-update /bin/swarm-update
 
-COPY --from=builder /go/bin/drone-stack /bin/drone-stack
-
-ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh", "/bin/drone-stack"]
+ENTRYPOINT ["/bin/swarm-update"]

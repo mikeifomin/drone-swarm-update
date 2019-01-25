@@ -210,6 +210,32 @@ func commandDeploy(deploy Deploy, auth bool) *exec.Cmd {
 	return exec.Command(dockerExe, args...)
 }
 
+// helper function to create the docker stack deploy command.
+func commandUpdate(deploy Deploy, serviceName string, auth bool) *exec.Cmd {
+	args := []string{
+		"stack",
+		"deploy",
+		"-c", deploy.Compose,
+		deploy.Name,
+	}
+
+	if deploy.Prune {
+		args = append(args, "--prune")
+	}
+
+	if auth {
+		args = append(args, "--with-registry-auth")
+	}
+
+	fmt.String
+	args = append(args, serviceName)
+	args = append(args, serviceName)
+
+	return exec.Command(dockerExe, args...)
+}
+
+//	- "docker service update --with-registry-auth --image=r.midas.fun/midas/client_front:${DRONE_COMMIT_SHA:0:10} midas_prod_client_front"
+
 // trace writes each command to stdout with the command wrapped in an xml
 // tag so that it can be extracted and displayed in the logs.
 func trace(cmd *exec.Cmd) {
